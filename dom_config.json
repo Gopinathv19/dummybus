@@ -1,12 +1,12 @@
 {
-  "broken": true,
+  "broken": false,
   "fields": {
     "operator_name": {
       "html_class": "service-name",
       "json_key": "operator_name",
       "broken_html_class": "provider-name",
       "broken_json_key": "provider",
-      "is_broken": true
+      "is_broken": false
     },
     "bus_type": {
       "html_class": "bus-type",
