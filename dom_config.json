@@ -1,0 +1,68 @@
+{
+  "broken": true,
+  "fields": {
+    "operator_name": {
+      "html_class": "service-name",
+      "json_key": "operator_name",
+      "broken_html_class": "provider-name",
+      "broken_json_key": "provider",
+      "is_broken": true
+    },
+    "bus_type": {
+      "html_class": "bus-type",
+      "json_key": "bus_type",
+      "broken_html_class": "coach-type",
+      "broken_json_key": "coach_type",
+      "is_broken": false
+    },
+    "departure_time": {
+      "html_class": "departure-time",
+      "json_key": "departure_time",
+      "broken_html_class": "dep-time",
+      "broken_json_key": "dep_time",
+      "is_broken": false
+    },
+    "arrival_time": {
+      "html_class": "arrival-time",
+      "json_key": "arrival_time",
+      "broken_html_class": "arr-time",
+      "broken_json_key": "arr_time",
+      "is_broken": false
+    },
+    "duration": {
+      "html_class": "duration",
+      "json_key": "duration",
+      "broken_html_class": "travel-time",
+      "broken_json_key": "travel_time",
+      "is_broken": false
+    },
+    "price": {
+      "html_class": "fare-amount",
+      "json_key": "price",
+      "broken_html_class": "ticket-cost",
+      "broken_json_key": "fare",
+      "is_broken": false
+    },
+    "original_price": {
+      "html_class": "original-price",
+      "json_key": "original_price",
+      "broken_html_class": "strike-price",
+      "broken_json_key": "mrp",
+      "is_broken": false
+    },
+    "available_seats": {
+      "html_class": "seats",
+      "json_key": "available_seats",
+      "broken_html_class": "seats-left",
+      "broken_json_key": "seats_remaining",
+      "is_broken": false
+    },
+    "rating": {
+      "html_class": "rating",
+      "json_key": "rating",
+      "broken_html_class": "star-score",
+      "broken_json_key": "score",
+      "is_broken": false
+    }
+  }
+}

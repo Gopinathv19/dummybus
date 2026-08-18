@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DummyBus Admin — DOM Control Panel</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    /* ── Admin-only styles ── */
+    .admin-page { background: #0f172a; min-height: 100vh; color: #e2e8f0; }
+    .admin-header { background: #1e293b; border-bottom: 2px solid #f59e0b; padding: 1rem 0; }
+    .admin-header .logo-text { color: #f59e0b; }
+    .admin-header .logo-dot { color: #ef4444; }
+    .admin-title { font-size: 1.5rem; font-weight: 700; color: #f1f5f9; margin: 0; }
+    .admin-subtitle { color: #94a3b8; font-size: 0.85rem; margin-top: 0.25rem; }
+
+    /* ── Status Bar ── */
+    .status-bar {
+      display: flex; align-items: center; gap: 1rem;
+      background: #1e293b; border-radius: 12px; padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0; border: 1px solid #334155;
+    }
+    .status-indicator {
+      width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+      animation: pulse 2s infinite;
+    }
+    .status-indicator--healthy { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+    .status-indicator--broken  { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .status-text { font-weight: 600; font-size: 1.1rem; }
+    .status-text--healthy { color: #22c55e; }
+    .status-text--broken  { color: #ef4444; }
+    .status-detail { color: #94a3b8; font-size: 0.85rem; margin-left: auto; }
+
+    /* ── Big Action Buttons ── */
+    .action-row { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .action-btn {
+      flex: 1; min-width: 200px; padding: 1rem 1.5rem;
+      border: none; border-radius: 10px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; display: flex; align-items: center;
+      justify-content: center; gap: 0.5rem; letter-spacing: 0.3px;
+    }
+    .action-btn--break {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white; border: 2px solid #ef4444;
+    }
+    .action-btn--break:hover { background: linear-gradient(135deg, #ef4444, #dc2626); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(239,68,68,0.4); }
+    .action-btn--restore {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      color: white; border: 2px solid #22c55e;
+    }
+    .action-btn--restore:hover { background: linear-gradient(135deg, #22c55e, #16a34a); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(34,197,94,0.4); }
+    .action-btn--preview {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white; border: 2px solid #3b82f6; text-decoration: none;
+    }
+    .action-btn--preview:hover { background: linear-gradient(135deg, #3b82f6, #2563eb); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(59,130,246,0.4); }
+
+    /* ── Field Cards ── */
+    .fields-section-title {
+      font-size: 1rem; font-weight: 600; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin: 2rem 0 1rem;
+    }
+    .fields-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+    .field-card {
+      background: #1e293b; border-radius: 12px; padding: 1.25rem;
+      border: 1px solid #334155; transition: border-color 0.2s;
+    }
+    .field-card--broken { border-color: #ef4444; background: #1a0a0a; }
+    .field-card--healthy { border-color: #22c55e33; }
+    .field-card__header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .field-name { font-weight: 700; font-size: 0.95rem; color: #f1f5f9; }
+    .field-badge {
+      font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.6rem;
+      border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .field-badge--healthy { background: #14532d; color: #86efac; }
+    .field-badge--broken  { background: #450a0a; color: #fca5a5; }
+
+    .field-mapping { font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem; }
+    .field-mapping code {
+      background: #0f172a; border-radius: 4px; padding: 0.1rem 0.4rem;
+      font-family: monospace; color: #7dd3fc; font-size: 0.78rem;
+    }
+    .field-mapping .arrow { color: #f59e0b; margin: 0 0.3rem; }
+
+    .field-current {
+      font-size: 0.82rem; color: #94a3b8; margin-bottom: 1rem;
+    }
+    .field-current strong { color: #e2e8f0; }
+    .field-current .broken-val { color: #ef4444; }
+    .field-current .healthy-val { color: #22c55e; }
+
+    .toggle-btn {
+      width: 100%; padding: 0.6rem; border: none; border-radius: 8px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .toggle-btn--break {
+      background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d;
+    }
+    .toggle-btn--break:hover { background: #7f1d1d; color: #fee2e2; }
+    .toggle-btn--restore {
+      background: #14532d; color: #86efac; border: 1px solid #166534;
+    }
+    .toggle-btn--restore:hover { background: #166534; color: #dcfce7; }
+
+    /* ── Toast Notification ── */
+    #toast {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 9999;
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 1rem 1.5rem; max-width: 360px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      transform: translateY(100px); opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.toast--success { border-color: #22c55e; }
+    #toast.toast--error   { border-color: #ef4444; }
+    #toast.toast--info    { border-color: #3b82f6; }
+    .toast-icon { font-size: 1.5rem; }
+    .toast-msg { font-size: 0.9rem; color: #e2e8f0; }
+
+    /* ── Live Log ── */
+    .log-section { margin-top: 2rem; }
+    .log-box {
+      background: #0f172a; border: 1px solid #1e293b; border-radius: 10px;
+      padding: 1rem; font-family: monospace; font-size: 0.8rem;
+      color: #94a3b8; max-height: 200px; overflow-y: auto;
+    }
+    .log-entry { margin-bottom: 0.3rem; }
+    .log-entry .log-time { color: #475569; margin-right: 0.5rem; }
+    .log-entry .log-break { color: #ef4444; }
+    .log-entry .log-restore { color: #22c55e; }
+    .log-entry .log-toggle { color: #f59e0b; }
+
+    /* ── Links row ── */
+    .quick-links { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .quick-link {
+      background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+      padding: 0.6rem 1rem; color: #94a3b8; text-decoration: none;
+      font-size: 0.85rem; transition: all 0.2s;
+    }
+    .quick-link:hover { border-color: #f59e0b; color: #f59e0b; }
+  </style>
+</head>
+
+<body class="admin-page">
+
+  <!-- ── Header ── -->
+  <header class="admin-header">
+    <div class="container header-inner">
+      <div class="logo">
+        <span class="logo-icon">🚌</span>
+        <span class="logo-text">DummyBus<span class="logo-dot">.com</span></span>
+        <span style="color:#f59e0b; margin-left:0.75rem; font-size:0.85rem; font-weight:600;">/ ADMIN</span>
+      </div>
+      <div>
+        <div class="admin-title">DOM Control Panel</div>
+        <div class="admin-subtitle">BusSlinger Self-Healing Demo — Break &amp; Restore Field Selectors</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container" style="padding-top:1.5rem; padding-bottom:4rem;">
+
+    <!-- ── Quick Links ── -->
+    <div class="quick-links">
+      <a href="/" class="quick-link">🏠 Homepage</a>
+      <a href="/results?from_city=Chennai&to_city=Bengaluru" class="quick-link" target="_blank">📄 Results Page</a>
+      <a href="/api/buses?from_city=Chennai&to_city=Bengaluru" class="quick-link" target="_blank">📡 JSON API</a>
+      <a href="/admin/status" class="quick-link" target="_blank">🔍 DOM Status JSON</a>
+    </div>
+
+    <!-- ── Live Status Bar ── -->
+    <div class="status-bar" id="statusBar">
+      <div class="status-indicator {% if config.broken %}status-indicator--broken{% else %}status-indicator--healthy{% endif %}"
+           id="statusDot"></div>
+      <div>
+        <div class="status-text {% if config.broken %}status-text--broken{% else %}status-text--healthy{% endif %}"
+             id="statusText">
+          {% if config.broken %}
+            🔴 DOM IS BROKEN — {{ broken_count }}/{{ config.fields | length }} fields renamed
+          {% else %}
+            🟢 DOM IS HEALTHY — All selectors are original
+          {% endif %}
+        </div>
+        <div style="font-size:0.8rem; color:#64748b; margin-top:0.2rem;">
+          Scraper will {% if config.broken %}FAIL to find renamed fields → HealEngine triggers{% else %}find all fields correctly{% endif %}
+        </div>
+      </div>
+      <div class="status-detail" id="statusDetail">
+        {{ broken_count }}/{{ config.fields | length }} broken
+      </div>
+    </div>
+
+    <!-- ── Big Action Buttons ── -->
+    <div class="action-row">
+      <button class="action-btn action-btn--break" onclick="breakAll()">
+        💥 Break ALL Fields
+      </button>
+      <button class="action-btn action-btn--restore" onclick="restoreAll()">
+        ✅ Restore ALL Fields
+      </button>
+      <a href="/results?from_city=Chennai&to_city=Bengaluru"
+         class="action-btn action-btn--preview" target="_blank">
+        👁 Preview Results Page
+      </a>
+    </div>
+
+    <!-- ── Demo Presets ── -->
+    <div class="fields-section-title">⚡ Demo Presets (Quick Scenarios)</div>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:2rem;">
+      <button class="action-btn" style="flex:none; background:#78350f; border-color:#d97706; color:#fef3c7; padding:0.6rem 1.2rem; font-size:0.85rem;"
+              onclick="breakSpecific('price,operator_name')">
+        💰 Break Price + Operator
+      </button>
+      <button class="action-btn" style="flex:none; background:#1e1b4b; border-color:#6366f1; color:#c7d2fe; padding:0.6rem 1.2rem; font-size:0.85rem;"
+              onclick="breakSpecific('departure_time,arrival_time,duration')">
+        🕐 Break All Time Fields
+      </button>
+      <button class="action-btn" style="flex:none; background:#4a044e; border-color:#a855f7; color:#e9d5ff; padding:0.6rem 1.2rem; font-size:0.85rem;"
+              onclick="breakSpecific('price,operator_name,available_seats,rating')">
+        💣 Break 4 Key Fields
+      </button>
+    </div>
+
+    <!-- ── Individual Field Toggles ── -->
+    <div class="fields-section-title">🎛 Individual Field Controls</div>
+    <div class="fields-grid" id="fieldsGrid">
+      {% for field_name, field_cfg in config.fields.items() %}
+      <div class="field-card {% if field_cfg.is_broken %}field-card--broken{% else %}field-card--healthy{% endif %}"
+           id="card-{{ field_name }}">
+        <div class="field-card__header">
+          <span class="field-name">{{ field_name }}</span>
+          <span class="field-badge {% if field_cfg.is_broken %}field-badge--broken{% else %}field-badge--healthy{% endif %}"
+                id="badge-{{ field_name }}">
+            {% if field_cfg.is_broken %}BROKEN{% else %}HEALTHY{% endif %}
+          </span>
+        </div>
+
+        <div class="field-mapping">
+          HTML: <code>{{ field_cfg.html_class }}</code>
+          <span class="arrow">→</span>
+          <code style="color:#fca5a5;">{{ field_cfg.broken_html_class }}</code>
+        </div>
+        <div class="field-mapping">
+          JSON: <code>{{ field_cfg.json_key }}</code>
+          <span class="arrow">→</span>
+          <code style="color:#fca5a5;">{{ field_cfg.broken_json_key }}</code>
+        </div>
+
+        <div class="field-current" id="current-{{ field_name }}">
+          Active HTML class:
+          <strong class="{% if field_cfg.is_broken %}broken-val{% else %}healthy-val{% endif %}">
+            .{{ field_cfg.broken_html_class if field_cfg.is_broken else field_cfg.html_class }}
+          </strong>
+          &nbsp;|&nbsp; JSON key:
+          <strong class="{% if field_cfg.is_broken %}broken-val{% else %}healthy-val{% endif %}">
+            {{ field_cfg.broken_json_key if field_cfg.is_broken else field_cfg.json_key }}
+          </strong>
+        </div>
+
+        <button
+          class="toggle-btn {% if field_cfg.is_broken %}toggle-btn--restore{% else %}toggle-btn--break{% endif %}"
+          id="btn-{{ field_name }}"
+          onclick="toggleField('{{ field_name }}')">
+          {% if field_cfg.is_broken %}✅ Restore '{{ field_name }}'{% else %}💥 Break '{{ field_name }}'{% endif %}
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ── Live Action Log ── -->
+    <div class="log-section">
+      <div class="fields-section-title">📋 Session Action Log</div>
+      <div class="log-box" id="logBox">
+        <div class="log-entry">
+          <span class="log-time">{{ "now" }}</span>
+          <span style="color:#475569;">— Admin panel loaded. Ready to demo.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Toast ── -->
+  <div id="toast">
+    <span class="toast-icon" id="toastIcon">✅</span>
+    <span class="toast-msg" id="toastMsg">Done!</span>
+  </div>
+
+  <script>
+    // ── Config mirror (from server) ─────────────────────────────────────────
+    const FIELD_CONFIG = {{ config | tojson }};
+
+    // ── Toast helper ────────────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icon  = document.getElementById('toastIcon');
+      const text  = document.getElementById('toastMsg');
+      const icons = { success: '✅', error: '❌', info: 'ℹ️', break: '💥' };
+      toast.className = `show toast--${type}`;
+      icon.textContent = icons[type] || '✅';
+      text.textContent = msg;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.className = ''; }, 3500);
+    }
+
+    // ── Log helper ──────────────────────────────────────────────────────────
+    function addLog(msg, type = 'toggle') {
+      const box = document.getElementById('logBox');
+      const time = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `<span class="log-time">${time}</span><span class="log-${type}">${msg}</span>`;
+      box.insertBefore(entry, box.firstChild);
+    }
+
+    // ── Update status bar ───────────────────────────────────────────────────
+    function updateStatusBar(broken_count, total) {
+      const dot  = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      const detail = document.getElementById('statusDetail');
+      const isBroken = broken_count > 0;
+
+      dot.className = `status-indicator ${isBroken ? 'status-indicator--broken' : 'status-indicator--healthy'}`;
+      text.className = `status-text ${isBroken ? 'status-text--broken' : 'status-text--healthy'}`;
+      text.textContent = isBroken
+        ? `🔴 DOM IS BROKEN — ${broken_count}/${total} fields renamed`
+        : '🟢 DOM IS HEALTHY — All selectors are original';
+      detail.textContent = `${broken_count}/${total} broken`;
+    }
+
+    // ── Update a single field card ──────────────────────────────────────────
+    function updateFieldCard(field, is_broken, active_html_class, active_json_key) {
+      const card    = document.getElementById(`card-${field}`);
+      const badge   = document.getElementById(`badge-${field}`);
+      const current = document.getElementById(`current-${field}`);
+      const btn     = document.getElementById(`btn-${field}`);
+
+      card.className = `field-card ${is_broken ? 'field-card--broken' : 'field-card--healthy'}`;
+      badge.className = `field-badge ${is_broken ? 'field-badge--broken' : 'field-badge--healthy'}`;
+      badge.textContent = is_broken ? 'BROKEN' : 'HEALTHY';
+
+      const colorClass = is_broken ? 'broken-val' : 'healthy-val';
+      current.innerHTML = `
+        Active HTML class: <strong class="${colorClass}">.${active_html_class}</strong>
+        &nbsp;|&nbsp; JSON key: <strong class="${colorClass}">${active_json_key}</strong>
+      `;
+
+      btn.className = `toggle-btn ${is_broken ? 'toggle-btn--restore' : 'toggle-btn--break'}`;
+      btn.textContent = is_broken ? `✅ Restore '${field}'` : `💥 Break '${field}'`;
+    }
+
+    // ── Toggle single field ─────────────────────────────────────────────────
+    async function toggleField(field) {
+      try {
+        const res = await fetch(`/admin/toggle/${field}`, { method: 'POST' });
+        const data = await res.json();
+        updateFieldCard(field, data.status === 'broken', data.active_html_class, data.active_json_key);
+        refreshStatus();
+        const action = data.status === 'broken' ? '💥 BROKE' : '✅ RESTORED';
+        const type = data.status === 'broken' ? 'break' : 'success';
+        showToast(`${action}: '${field}' → ${data.active_json_key} / .${data.active_html_class}`, type);
+        addLog(`${action} field '${field}' → HTML:.${data.active_html_class}, JSON:${data.active_json_key}`, data.status === 'broken' ? 'break' : 'restore');
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
+    }
+
+    // ── Break ALL ───────────────────────────────────────────────────────────
+    async function breakAll() {
+      try {
+        const form = new FormData();
+        const res = await fetch('/admin/break', { method: 'POST', body: form });
+        const data = await res.json();
+        await refreshAllCards();
+        showToast(`💥 Broke ALL ${data.broken_fields.length} fields! Scraper will fail now.`, 'break');
+        addLog(`💥 BROKE ALL FIELDS: [${data.broken_fields.join(', ')}]`, 'break');
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
+    }
+
+    // ── Break specific fields ───────────────────────────────────────────────
+    async function breakSpecific(fieldsStr) {
+      try {
+        const form = new FormData();
+        form.append('fields', fieldsStr);
+        const res = await fetch('/admin/break', { method: 'POST', body: form });
+        const data = await res.json();
+        await refreshAllCards();
+        showToast(`💥 Broke: ${data.broken_fields.join(', ')}`, 'break');
+        addLog(`💥 PRESET BREAK: [${data.broken_fields.join(', ')}]`, 'break');
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
+    }
+
+    // ── Restore ALL ─────────────────────────────────────────────────────────
+    async function restoreAll() {
+      try {
+        const res = await fetch('/admin/restore', { method: 'POST' });
+        const data = await res.json();
+        await refreshAllCards();
+        showToast('✅ All fields RESTORED! Scraper should work again.', 'success');
+        addLog('✅ RESTORED ALL FIELDS to original selectors.', 'restore');
+      } catch (e) {
+        showToast('Error: ' + e.message, 'error');
+      }
+    }
+
+    // ── Refresh all cards from server ────────────────────────────────────────
+    async function refreshAllCards() {
+      const res = await fetch('/admin/status');
+      const data = await res.json();
+      for (const [field, info] of Object.entries(data.fields)) {
+        updateFieldCard(field, info.is_broken, info.active_html_class, info.active_json_key);
+      }
+      updateStatusBar(data.broken_count, Object.keys(data.fields).length);
+    }
+
+    // ── Refresh just the status bar ──────────────────────────────────────────
+    async function refreshStatus() {
+      const res = await fetch('/admin/status');
+      const data = await res.json();
+      updateStatusBar(data.broken_count, Object.keys(data.fields).length);
+    }
+
+    // ── Auto-refresh status every 5s ────────────────────────────────────────
+    setInterval(refreshStatus, 5000);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DummyBus.com — Book Bus Tickets Online</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- ── Header ── -->
+  <header class="header">
+    <div class="container header-inner">
+      <div class="logo">
+        <span class="logo-icon">🚌</span>
+        <span class="logo-text">DummyBus<span class="logo-dot">.com</span></span>
+      </div>
+      <nav class="header-nav">
+        <a href="/">Home</a>
+        <a href="/admin" class="admin-link {% if is_any_broken %}admin-link--broken{% endif %}">
+          {% if is_any_broken %}
+            ⚠️ Admin ({{ broken_count }} broken)
+          {% else %}
+            🛠 Admin
+          {% endif %}
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── Hero Search ── -->
+  <section class="hero">
+    <div class="container">
+      <h1 class="hero-title">Book Bus Tickets Instantly</h1>
+      <p class="hero-sub">India's fastest dummy bus booking platform</p>
+
+      {% if is_any_broken %}
+      <div class="dom-warning-banner">
+        ⚠️ <strong>DOM ALERT:</strong> {{ broken_count }} field selector(s) have changed on this site.
+        BusSlinger's self-healing engine will detect and recover automatically.
+        <a href="/admin">View Admin Panel →</a>
+      </div>
+      {% endif %}
+
+      <div class="search-card">
+        <form action="/results" method="get" class="search-form">
+          <div class="search-row">
+            <div class="search-field">
+              <label for="from_city">From</label>
+              <input
+                type="text"
+                id="from_city"
+                name="from_city"
+                placeholder="Chennai"
+                value="Chennai"
+                required
+              />
+            </div>
+
+            <button type="button" class="swap-btn" onclick="swapCities()">⇄</button>
+
+            <div class="search-field">
+              <label for="to_city">To</label>
+              <input
+                type="text"
+                id="to_city"
+                name="to_city"
+                placeholder="Bengaluru"
+                value="Bengaluru"
+                required
+              />
+            </div>
+
+            <div class="search-field">
+              <label for="date">Date</label>
+              <input
+                type="date"
+                id="date"
+                name="date"
+                value="{{ today }}"
+                required
+              />
+            </div>
+
+            <button type="submit" class="search-btn">Search Buses</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ── -->
+  <section class="features">
+    <div class="container features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>12+ Bus Operators</h3>
+        <p>Multiple services covering all major routes</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>Best Prices</h3>
+        <p>Starting from ₹450 with exclusive discounts</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Instant Booking</h3>
+        <p>Confirm your seat in under 60 seconds</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Safe Travel</h3>
+        <p>Verified operators with safety ratings</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer class="footer">
+    <div class="container">
+      <p>DummyBus.com — A demo app for <strong>BusSlinger</strong> (Into the Scrape-Verse Hackathon)</p>
+      <p class="footer-links">
+        <a href="/api/buses?from_city=Chennai&to_city=Bengaluru">JSON API</a> ·
+        <a href="/admin">Admin Panel</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Set today's date as default
+    document.addEventListener('DOMContentLoaded', function () {
+      const dateInput = document.getElementById('date');
+      if (!dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+      }
+    });
+
+    function swapCities() {
+      const from = document.getElementById('from_city');
+      const to = document.getElementById('to_city');
+      const temp = from.value;
+      from.value = to.value;
+      to.value = temp;
+    }
+  </script>
+</body>
+</html>
