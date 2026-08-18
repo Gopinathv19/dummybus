@@ -203,16 +203,14 @@
 
           <!--
             SCRAPER TARGET: booking_url
-            Stored in data-booking-url attribute — NOT an href.
-            Read with: $card.find('.book-btn').attr('data-booking-url')
+            Stored in data-booking-url attribute as a plain data attribute.
+            Read with: $card.find('[data-booking-url]').attr('data-booking-url')
+            NOTE: No button/link — pure data attribute only, no navigation.
           -->
-          <button type="button"
-                  class="book-btn"
-                  data-booking-url="{{ base_url }}{{ bus.product_page_url }}"
-                  data-operator="{{ bus.operator_name }}"
-                  onclick="window.location.href=this.dataset.bookingUrl">
-            Book Now
-          </button>
+          <span class="booking-url-data"
+                data-booking-url="{{ base_url }}{{ bus.product_page_url }}"
+                data-operator="{{ bus.operator_name }}">
+          </span>
         </div>
       </div>
 
