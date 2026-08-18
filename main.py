@@ -2,14 +2,16 @@
 DummyBus.com — Fake bus-booking site for BusSlinger self-healing demo.
 
 Endpoints:
-  GET  /                          → Homepage (search form)
-  GET  /results?from=...&to=...&date=...  → HTML results page (Bright Data scrapes this)
+  GET  /                               → Homepage (search form)
+  GET  /results?from=...&to=...&date=... → HTML results page (Bright Data scrapes this)
   GET  /api/buses?from=...&to=...&date=... → JSON API (returns nested services array)
-  GET  /admin                     → Admin panel (DOM break/restore controls)
-  POST /admin/break               → Break all or specific fields
-  POST /admin/restore             → Restore all fields to normal
-  POST /admin/toggle/{field}      → Toggle a single field
-  GET  /admin/status              → Current DOM config (JSON)
+  GET  /bus/{operator}/{route}         → Booking detail page (catch-all so Bright Data
+                                          next_stage() links never 404)
+  GET  /admin                          → Admin panel (DOM break/restore controls)
+  POST /admin/break                    → Break all or specific fields
+  POST /admin/restore                  → Restore all fields to normal
+  POST /admin/toggle/{field}           → Toggle a single field
+  GET  /admin/status                   → Current DOM config (JSON)
 """
 
 import json
@@ -443,6 +445,72 @@ async def admin_status():
             "fields": active,
         }
     )
+
+
+# ── Bus Detail / Booking Page (catch-all for Bright Data link-following) ──────
+
+@app.get("/bus/{operator}/{route}", response_class=HTMLResponse)
+async def bus_detail(request: Request, operator: str, route: str):
+    """
+    Catch-all booking page for /bus/{operator}/{route} URLs.
+    These are the 'Book Now' deep-links that Bright Data follows when it
+    encounters next_stage() calls. Without this route the scraper gets 404s.
+    Returns a minimal HTML booking confirmation page so the scraper can
+    complete gracefully instead of hitting dead_page errors.
+    """
+    operator_display = operator.replace("-", " ").title()
+    route_display = route.replace("-", " ").title()
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book – {operator_display} | DummyBus</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    .booking-box {{
+      max-width: 540px;
+      margin: 80px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+      padding: 40px 36px;
+      text-align: center;
+    }}
+    .booking-box h1 {{ color: #2563eb; margin-bottom: 8px; }}
+    .booking-box p  {{ color: #555; margin: 6px 0; }}
+    .badge {{
+      display: inline-block;
+      background: #dcfce7;
+      color: #16a34a;
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-weight: 600;
+      margin-top: 18px;
+    }}
+    .back-link {{
+      display: inline-block;
+      margin-top: 28px;
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 500;
+    }}
+  </style>
+</head>
+<body>
+  <div class="booking-box">
+    <h1>🚌 Booking Page</h1>
+    <p><strong>Operator:</strong> {operator_display}</p>
+    <p><strong>Route:</strong> {route_display}</p>
+    <p><strong>URL:</strong> /bus/{operator}/{route}</p>
+    <div class="badge">✅ Demo Booking Page — No 404!</div>
+    <br/>
+    <a class="back-link" href="/results?from_city=Chennai&to_city=Bengaluru">← Back to Results</a>
+  </div>
+</body>
+</html>"""
+    return HTMLResponse(content=html, status_code=200)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
