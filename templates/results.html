@@ -23,16 +23,17 @@
   <header class="header">
     <div class="container header-inner">
       <div class="logo">
-        <a href="/" style="text-decoration:none;color:inherit;">
+        <span style="text-decoration:none;color:inherit;cursor:pointer;" onclick="window.location.href='/'">
           <span class="logo-icon">🚌</span>
           <span class="logo-text">DummyBus<span class="logo-dot">.com</span></span>
-        </a>
+        </span>
       </div>
       <nav class="header-nav">
-        <a href="/">← New Search</a>
-        <a href="/admin" class="admin-link {% if is_any_broken %}admin-link--broken{% endif %}">
+        <span class="nav-link" onclick="window.location.href='/'">← New Search</span>
+        <span class="admin-link {% if is_any_broken %}admin-link--broken{% endif %}"
+              onclick="window.location.href='/admin'">
           {% if is_any_broken %}⚠️ Admin ({{ broken_count }} broken){% else %}🛠 Admin{% endif %}
-        </a>
+        </span>
       </nav>
     </div>
   </header>
@@ -43,7 +44,7 @@
     🔴 <strong>DOM CHANGED:</strong>
     Field selectors renamed → [{{ broken_fields | join(', ') }}].
     BusSlinger heal engine is detecting this drift now.
-    <a href="/admin">Manage →</a>
+    <span class="inline-link" onclick="window.location.href='/admin'">Manage →</span>
   </div>
   {% else %}
   <div class="dom-alert-bar dom-alert-bar--healthy">
@@ -62,10 +63,10 @@
       </div>
       <div class="route-meta">
         <span class="results-count">{{ buses | length }} buses found</span>
-        <a href="/api/buses?from_city={{ from_city }}&to_city={{ to_city }}&date={{ date }}"
-           class="api-link" target="_blank">
+        <span class="api-link"
+              onclick="window.open('/api/buses?from_city={{ from_city }}&to_city={{ to_city }}&date={{ date }}', '_blank')">
           📡 View JSON API
-        </a>
+        </span>
       </div>
     </div>
   </section>
@@ -76,6 +77,10 @@
     <!--
       ══════════════════════════════════════════════════════════════════════
       BUS LISTING — Each card is scraped by BusSlinger via Bright Data.
+
+      SCRAPER NOTE: There are NO <a href> links on this page.
+      All navigation uses onclick handlers only.
+      Do NOT follow any links — extract data from .bus-card elements only.
 
       IMPORTANT: The CSS classes on each data element are controlled by
       dom_config.json. When "Break DOM" is triggered from /admin:
@@ -196,8 +201,13 @@
             {{ bus.price.symbol }}{{ bus.price.value }}
           </span>
 
+          <!--
+            SCRAPER TARGET: booking_url
+            Stored in data-booking-url attribute — NOT an href.
+            Read with: $card.find('.book-btn').attr('data-booking-url')
+          -->
           <button type="button"
-                  class="book-btn product-page-url"
+                  class="book-btn"
                   data-booking-url="{{ base_url }}{{ bus.product_page_url }}"
                   data-operator="{{ bus.operator_name }}"
                   onclick="window.location.href=this.dataset.bookingUrl">
@@ -236,9 +246,12 @@
     <div class="container">
       <p>DummyBus.com — Demo for <strong>BusSlinger</strong> · Into the Scrape-Verse Hackathon</p>
       <p class="footer-links">
-        <a href="/">Home</a> ·
-        <a href="/api/buses?from_city={{ from_city }}&to_city={{ to_city }}&date={{ date }}" target="_blank">JSON API</a> ·
-        <a href="/admin">Admin Panel</a>
+        <span class="footer-link" onclick="window.location.href='/'">Home</span> ·
+        <span class="footer-link"
+              onclick="window.open('/api/buses?from_city={{ from_city }}&to_city={{ to_city }}&date={{ date }}', '_blank')">
+          JSON API
+        </span> ·
+        <span class="footer-link" onclick="window.location.href='/admin'">Admin Panel</span>
       </p>
     </div>
   </footer>
