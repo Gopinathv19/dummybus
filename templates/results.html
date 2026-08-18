@@ -5,144 +5,74 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{ from_city }} to {{ to_city }} Bus Tickets | DummyBus.com</title>
   <link rel="stylesheet" href="/static/style.css" />
-
-  <!--
-    ══════════════════════════════════════════════════════════════════════
-    SCRAPER META — BusSlinger reads these to understand the page context
-    ══════════════════════════════════════════════════════════════════════
-  -->
   <meta name="page-type" content="bus-results" />
   <meta name="source-city" content="{{ from_city }}" />
   <meta name="destination-city" content="{{ to_city }}" />
   <meta name="travel-date" content="{{ date }}" />
-  <meta name="input-url" content="{{ input_url }}" />
 </head>
 <body>
 
-  <!-- ── Header ── -->
   <header class="header">
     <div class="container header-inner">
       <div class="logo">
-        <span style="text-decoration:none;color:inherit;cursor:pointer;" onclick="window.location.href='/'">
-          <span class="logo-icon">🚌</span>
-          <span class="logo-text">DummyBus<span class="logo-dot">.com</span></span>
-        </span>
+        <span class="logo-icon">🚌</span>
+        <span class="logo-text">DummyBus<span class="logo-dot">.com</span></span>
       </div>
       <nav class="header-nav">
-        <span class="nav-link" onclick="window.location.href='/'">← New Search</span>
-        <span class="admin-link {% if is_any_broken %}admin-link--broken{% endif %}"
-              onclick="window.location.href='/admin'">
-          {% if is_any_broken %}⚠️ Admin ({{ broken_count }} broken){% else %}🛠 Admin{% endif %}
-        </span>
+        <span onclick="window.location.href='/'">← New Search</span>
+        <span onclick="window.location.href='/admin'">🛠 Admin</span>
       </nav>
     </div>
   </header>
 
-  <!-- ── DOM Status Banner (visible in browser, scraper ignores) ── -->
   {% if is_any_broken %}
   <div class="dom-alert-bar dom-alert-bar--broken">
-    🔴 <strong>DOM CHANGED:</strong>
-    Field selectors renamed → [{{ broken_fields | join(', ') }}].
-    BusSlinger heal engine is detecting this drift now.
-    <span class="inline-link" onclick="window.location.href='/admin'">Manage →</span>
+    🔴 <strong>DOM CHANGED:</strong> Field selectors renamed.
   </div>
   {% else %}
   <div class="dom-alert-bar dom-alert-bar--healthy">
-    🟢 <strong>DOM HEALTHY:</strong> All field selectors are using original names. Scraper should work perfectly.
+    🟢 <strong>DOM HEALTHY:</strong> All selectors are original.
   </div>
   {% endif %}
 
-  <!-- ── Route Summary ── -->
   <section class="route-bar">
     <div class="container route-bar-inner">
       <div class="route-info">
-        <span class="route-city">{{ from_city }}</span>
+        <span class="from-city">{{ from_city }}</span>
         <span class="route-arrow">→</span>
-        <span class="route-city">{{ to_city }}</span>
-        <span class="route-date">| {{ date }}</span>
+        <span class="to-city">{{ to_city }}</span>
+        <span class="travel-date">{{ date }}</span>
       </div>
       <div class="route-meta">
         <span class="results-count">{{ buses | length }} buses found</span>
-        <span class="api-link"
-              onclick="window.open('/api/buses?from_city={{ from_city }}&to_city={{ to_city }}&date={{ date }}', '_blank')">
-          📡 View JSON API
-        </span>
       </div>
     </div>
   </section>
 
-  <!-- ── Results Container ── -->
   <main class="container results-container">
 
-    <!--
-      ══════════════════════════════════════════════════════════════════════
-      BUS LISTING — Each card is scraped by BusSlinger via Bright Data.
-
-      SCRAPER NOTE: There are NO <a href> links on this page.
-      All navigation uses onclick handlers only.
-      Do NOT follow any links — extract data from .bus-card elements only.
-
-      IMPORTANT: The CSS classes on each data element are controlled by
-      dom_config.json. When "Break DOM" is triggered from /admin:
-        • classes["operator_name"] changes from "service-name" → "provider-name"
-        • classes["price"] changes from "fare-amount" → "ticket-cost"
-        • etc.
-
-      This is what triggers BusSlinger's self-healing engine!
-      ══════════════════════════════════════════════════════════════════════
-    -->
-
     {% for bus in buses %}
-    <div class="bus-card" data-bus-index="{{ loop.index }}">
+    <div class="bus-card">
 
-      <!-- ── Operator & Bus Type ── -->
       <div class="bus-card__header">
         <div class="bus-card__operator">
-          <!--
-            SCRAPER TARGET: operator_name
-            Normal class:  "service-name"
-            Broken class:  "provider-name"
-          -->
           <span class="{{ classes.operator_name }}">{{ bus.operator_name }}</span>
-
-          <!--
-            SCRAPER TARGET: bus_type
-            Normal class:  "bus-type"
-            Broken class:  "coach-type"
-          -->
           <span class="{{ classes.bus_type }}">{{ bus.bus_type }}</span>
         </div>
-
-        <!--
-          SCRAPER TARGET: rating
-          Normal class:  "rating"
-          Broken class:  "star-score"
-        -->
         <div class="rating-badge">
           <span class="{{ classes.rating }}">{{ bus.rating }}</span>
           <span class="rating-star">★</span>
         </div>
       </div>
 
-      <!-- ── Times & Duration ── -->
       <div class="bus-card__times">
         <div class="time-block">
           <span class="time-label">Departure</span>
-          <!--
-            SCRAPER TARGET: departure_time
-            Normal class:  "departure-time"
-            Broken class:  "dep-time"
-          -->
           <span class="{{ classes.departure_time }} time-value">{{ bus.departure_time }}</span>
           <span class="city-label">{{ from_city }}</span>
         </div>
 
         <div class="duration-block">
-          <!--
-            SCRAPER TARGET: duration
-            Normal class:  "duration"
-            Broken class:  "travel-time"
-          -->
           <span class="{{ classes.duration }}">{{ bus.duration }}</span>
           <div class="duration-line">
             <span>——————</span>
@@ -153,104 +83,39 @@
 
         <div class="time-block time-block--right">
           <span class="time-label">Arrival</span>
-          <!--
-            SCRAPER TARGET: arrival_time
-            Normal class:  "arrival-time"
-            Broken class:  "arr-time"
-          -->
           <span class="{{ classes.arrival_time }} time-value">{{ bus.arrival_time }}</span>
           <span class="city-label">{{ to_city }}</span>
         </div>
       </div>
 
-      <!-- ── Price & Seats ── -->
       <div class="bus-card__footer">
         <div class="seats-block">
           <span class="seats-label">Available</span>
-          <!--
-            SCRAPER TARGET: available_seats
-            Normal class:  "seats"
-            Broken class:  "seats-left"
-          -->
-          <span class="{{ classes.available_seats }}
-            {% if bus.available_seats <= 5 %}seats--critical
-            {% elif bus.available_seats <= 15 %}seats--low
-            {% else %}seats--ok{% endif %}">
+          <span class="{{ classes.available_seats }} {% if bus.available_seats <= 5 %}seats--critical{% elif bus.available_seats <= 15 %}seats--low{% else %}seats--ok{% endif %}">
             {{ bus.available_seats }} Seats
           </span>
         </div>
 
         <div class="price-block">
-          <!--
-            SCRAPER TARGET: original_price
-            Normal class:  "original-price"
-            Broken class:  "strike-price"
-          -->
           {% if bus.original_price.value != bus.price.value %}
           <span class="{{ classes.original_price }} price-strike">
             {{ bus.original_price.symbol }}{{ bus.original_price.value }}
           </span>
           {% endif %}
-
-          <!--
-            SCRAPER TARGET: price
-            Normal class:  "fare-amount"
-            Broken class:  "ticket-cost"
-          -->
           <span class="{{ classes.price }} price-main">
             {{ bus.price.symbol }}{{ bus.price.value }}
-          </span>
-
-          <!--
-            SCRAPER TARGET: booking_url
-            Stored in data-booking-url attribute as a plain data attribute.
-            Read with: $card.find('[data-booking-url]').attr('data-booking-url')
-            NOTE: No button/link — pure data attribute only, no navigation.
-          -->
-          <span class="booking-url-data"
-                data-booking-url="{{ base_url }}{{ bus.product_page_url }}"
-                data-operator="{{ bus.operator_name }}">
           </span>
         </div>
       </div>
 
-    </div><!-- /.bus-card -->
+    </div>
     {% endfor %}
 
   </main>
 
-  <!-- ── Embedded JSON (for easy scraping / debugging) ── -->
-  <!--
-    SCRAPER HINT: The full structured data is also available at:
-    {{ base_url }}/api/buses?from_city={{ from_city }}&to_city={{ to_city }}&date={{ date }}
-    This returns the exact `services` array format BusSlinger expects.
-  -->
-  <script type="application/ld+json">
-  {
-    "page": "bus-results",
-    "source": "dummybus.com",
-    "route": {
-      "from": "{{ from_city }}",
-      "to": "{{ to_city }}",
-      "date": "{{ date }}"
-    },
-    "total_buses": {{ buses | length }},
-    "input": { "url": "{{ input_url }}" }
-  }
-  </script>
-
-  <!-- ── Footer ── -->
   <footer class="footer">
     <div class="container">
-      <p>DummyBus.com — Demo for <strong>BusSlinger</strong> · Into the Scrape-Verse Hackathon</p>
-      <p class="footer-links">
-        <span class="footer-link" onclick="window.location.href='/'">Home</span> ·
-        <span class="footer-link"
-              onclick="window.open('/api/buses?from_city={{ from_city }}&to_city={{ to_city }}&date={{ date }}', '_blank')">
-          JSON API
-        </span> ·
-        <span class="footer-link" onclick="window.location.href='/admin'">Admin Panel</span>
-      </p>
+      <p>DummyBus.com — Demo for <strong>BusSlinger</strong></p>
     </div>
   </footer>
 
