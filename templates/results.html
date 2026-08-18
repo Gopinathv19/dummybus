@@ -196,11 +196,13 @@
             {{ bus.price.symbol }}{{ bus.price.value }}
           </span>
 
-          <a href="{{ base_url }}{{ bus.product_page_url }}"
-             class="book-btn product-page-url"
-             data-operator="{{ bus.operator_name }}">
+          <button type="button"
+                  class="book-btn product-page-url"
+                  data-booking-url="{{ base_url }}{{ bus.product_page_url }}"
+                  data-operator="{{ bus.operator_name }}"
+                  onclick="window.location.href=this.dataset.bookingUrl">
             Book Now
-          </a>
+          </button>
         </div>
       </div>
 
