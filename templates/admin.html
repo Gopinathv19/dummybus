@@ -383,9 +383,10 @@
         const form = new FormData();
         const res = await fetch('/admin/break', { method: 'POST', body: form });
         const data = await res.json();
+        const brokenFields = Array.isArray(data.broken_fields) ? data.broken_fields : [];
         await refreshAllCards();
-        showToast(`💥 Broke ALL ${data.broken_fields.length} fields! Scraper will fail now.`, 'break');
-        addLog(`💥 BROKE ALL FIELDS: [${data.broken_fields.join(', ')}]`, 'break');
+        showToast(`💥 Broke ALL ${brokenFields.length} fields! Scraper will fail now.`, 'break');
+        addLog(`💥 BROKE ALL FIELDS: [${brokenFields.join(', ')}]`, 'break');
       } catch (e) {
         showToast('Error: ' + e.message, 'error');
       }
@@ -398,9 +399,10 @@
         form.append('fields', fieldsStr);
         const res = await fetch('/admin/break', { method: 'POST', body: form });
         const data = await res.json();
+        const brokenFields = Array.isArray(data.broken_fields) ? data.broken_fields : [];
         await refreshAllCards();
-        showToast(`💥 Broke: ${data.broken_fields.join(', ')}`, 'break');
-        addLog(`💥 PRESET BREAK: [${data.broken_fields.join(', ')}]`, 'break');
+        showToast(`💥 Broke: ${brokenFields.join(', ')}`, 'break');
+        addLog(`💥 PRESET BREAK: [${brokenFields.join(', ')}]`, 'break');
       } catch (e) {
         showToast('Error: ' + e.message, 'error');
       }
